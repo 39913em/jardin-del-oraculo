@@ -1,0 +1,3 @@
+User-agent: *
+Allow: /
+Sitemap: https://39913em.github.io/jardin-del-oraculo/sitemap.xml
