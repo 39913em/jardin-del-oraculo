@@ -2,6 +2,8 @@ import * as THREE from 'three';
 import { scene } from './escena-3d.js';
 import { ESTADO } from './estado-jardin.js';
 
+const _vColorPasto = new THREE.Color();
+
 const CONFIG_PASTO = {
   CANTIDAD_HERRAS: 12000,            
   ALTURA_MIN: 0.08,
@@ -78,11 +80,24 @@ function generarPosicionesPasto(cantidad, radioMax, densidad) {
   return posiciones;
 }
 
+let pastoMesh = null;
+let pastoColorAttr = null;
+let _m4 = null;
+const _pPos = new THREE.Vector3();
+const _pQuat = new THREE.Quaternion();
+const _pEuler = new THREE.Euler();
+const _pScale = new THREE.Vector3();
+
 function crearPasto() {
   if (pastoGroup) {
     scene.remove(pastoGroup);
     pastoGroup = null;
     hebrasData = [];
+  }
+  if (pastoMesh) {
+    scene.remove(pastoMesh);
+    pastoMesh.dispose();
+    pastoMesh = null;
   }
 
   const cantidad = CONFIG_PASTO.CANTIDAD_HERRAS;
@@ -91,12 +106,6 @@ function crearPasto() {
     CONFIG_PASTO.RADIO_DISTRIBUCION,
     CONFIG_PASTO.DENSIDAD_GLOBAL
   );
-
-  pastoGroup = new THREE.Group();
-
-  const colorOscuro = new THREE.Color(0x1a4a1a);
-  const colorClaro = new THREE.Color(0x4a8a3a);
-  const colorMedio = new THREE.Color(0x2d6a2a);
 
   const geoBase = new THREE.CylinderGeometry(1, 1, 1, 3, CONFIG_PASTO.SEGMENTOS_VERTICALES);
   geoBase.translate(0, 0.5, 0);
@@ -107,44 +116,62 @@ function crearPasto() {
     flatShading: true,
   });
 
-  posiciones.forEach(pos => {
+  pastoMesh = new THREE.InstancedMesh(geoBase, material, cantidad);
+  pastoMesh.instanceMatrix.setUsage(THREE.DynamicDrawUsage);
+  pastoMesh.frustumCulled = false;
+
+  const colores = new Float32Array(cantidad * 3);
+  pastoMesh.instanceColor = new THREE.InstancedBufferAttribute(colores, 3);
+
+  const colorOscuro = new THREE.Color(0x1a4a1a);
+  const colorClaro = new THREE.Color(0x4a8a3a);
+  const colorMedio = new THREE.Color(0x2d6a2a);
+
+  _m4 = new THREE.Matrix4();
+
+  const dummyPos = new THREE.Vector3();
+  const dummyQuat = new THREE.Quaternion();
+  const dummyEuler = new THREE.Euler();
+  const dummyScale = new THREE.Vector3();
+  const colorTemp = new THREE.Color();
+
+  posiciones.forEach((pos, i) => {
     const altura = CONFIG_PASTO.ALTURA_MIN + Math.random() * (CONFIG_PASTO.ALTURA_MAX - CONFIG_PASTO.ALTURA_MIN);
     const radio = CONFIG_PASTO.RADIO_MIN + Math.random() * (CONFIG_PASTO.RADIO_MAX - CONFIG_PASTO.RADIO_MIN);
     const inclinacion = (Math.random() - 0.5) * CONFIG_PASTO.INCLINACION_MAX * 2;
     const rotacion = Math.random() * Math.PI * 2;
+    const inclX = (Math.random() - 0.5) * CONFIG_PASTO.INCLINACION_MAX * 0.5;
 
-    const geo = geoBase.clone();
-    const scaleY = altura;
-    const scaleXZ = radio;
-    const matrix = new THREE.Matrix4().makeScale(scaleXZ, scaleY, scaleXZ);
-    geo.applyMatrix4(matrix);
+    dummyPos.set(pos.x, 0, pos.z);
+    dummyEuler.set(inclX, rotacion, inclinacion);
+    dummyQuat.setFromEuler(dummyEuler);
+    dummyScale.set(radio, altura, radio);
+
+    _m4.compose(dummyPos, dummyQuat, dummyScale);
+    pastoMesh.setMatrixAt(i, _m4);
 
     const mixFactor = 0.3 + (altura - CONFIG_PASTO.ALTURA_MIN) / (CONFIG_PASTO.ALTURA_MAX - CONFIG_PASTO.ALTURA_MIN) * 0.5;
-    const color = colorMedio.clone().lerp(colorClaro, mixFactor);
-    color.multiplyScalar(0.8 + Math.random() * 0.4);
-    material.color.set(color);
+    colorTemp.copy(colorMedio).lerp(colorClaro, mixFactor);
+    colorTemp.multiplyScalar(0.8 + Math.random() * 0.4);
+    pastoMesh.setColorAt(i, colorTemp);
 
-    const mesh = new THREE.Mesh(geo, material);
-    mesh.position.set(pos.x, 0, pos.z);
-    mesh.rotation.y = rotacion;
-    mesh.rotation.z = inclinacion;
-    mesh.rotation.x = (Math.random() - 0.5) * CONFIG_PASTO.INCLINACION_MAX * 0.5;
-
-    mesh.userData = {
-      altura: altura,
-      inclinacionBaseZ: mesh.rotation.z,
-      inclinacionBaseX: mesh.rotation.x,
+    hebrasData.push({
+      altura,
+      radio,
+      inclinacionBaseZ: inclinacion,
+      inclinacionBaseX: inclX,
+      rotacionBaseY: rotacion,
       fase: Math.random() * Math.PI * 2,
       velocidadViento: 0.15 + Math.random() * 0.25,
       posicionOriginal: new THREE.Vector3(pos.x, 0, pos.z),
-    };
-
-    pastoGroup.add(mesh);
-    hebrasData.push(mesh);
+    });
   });
 
-  scene.add(pastoGroup);
-  console.log(`🌿 Pasto OK`);
+  pastoMesh.instanceMatrix.needsUpdate = true;
+  if (pastoMesh.instanceColor) pastoMesh.instanceColor.needsUpdate = true;
+
+  scene.add(pastoMesh);
+  console.log(`🌿 Pasto OK (InstancedMesh x${cantidad})`);
 }
 
 function crearAnemona() {
@@ -231,19 +258,26 @@ function crearAnemona() {
       const tentaculo = new THREE.Mesh(tuboGeo, matTent);
       tentaculo.castShadow = true;
 
-      tentaculo.userData = {
+      const primerPunto = puntos[0];
+      tuboGeo.translate(-primerPunto.x, -primerPunto.y, -primerPunto.z);
+
+      const pivote = new THREE.Group();
+      pivote.position.copy(primerPunto);
+      pivote.add(tentaculo);
+      grupo.add(pivote);
+
+      pivote.userData = {
         fase: Math.random() * Math.PI * 2,
         velocidad: 0.6 + Math.random() * 0.8,
-        amplitud: 0.008 + Math.random() * 0.015,
-        puntosBase: puntos.map(p => p.clone()),
-        anguloBase: anguloTent,
-        radioBase: radioTent,
-        alturaBase: alturaBase,
-        radioCurva: radioCurva,
+        amplitud: 0.12 + Math.random() * 0.08,
+        axis: new THREE.Vector3(
+          -Math.sin(anguloTent),
+          0,
+          Math.cos(anguloTent)
+        ).normalize(),
       };
 
-      grupo.add(tentaculo);
-      tentaculos.push(tentaculo);
+      tentaculos.push(pivote);
     }
 
     const centroMat = new THREE.MeshStandardMaterial({
@@ -397,12 +431,27 @@ class Mimosa {
     if (this.cerrado) return;
     this.cerrado = true;
     this.objetivoCierre = 1;
+
+    if (this._timerApertura) {
+      clearTimeout(this._timerApertura);
+    }
+
+    const espera = 2500 + Math.random() * 2500;
+
+    this._timerApertura = setTimeout(() => {
+      this.abrir();
+    }, espera);
   }
 
   abrir() {
     if (!this.cerrado) return;
     this.cerrado = false;
     this.objetivoCierre = 0;
+
+    if (this._timerApertura) {
+      clearTimeout(this._timerApertura);
+      this._timerApertura = null;
+    }
   }
 
   update(time) {
@@ -450,41 +499,42 @@ export function crearVegetacion() {
 }
 
 export function actualizarVegetacion(time) {
-  if (pastoGroup) {
-    if (ESTADO.muerto) {
-      pastoGroup.visible = false;
-    } else {
-      pastoGroup.visible = true;
-    }
+  if (pastoMesh) {
+    pastoMesh.visible = !ESTADO.muerto;
 
-    const viento = Math.sin(time * 0.35) * 0.035;
-    const viento2 = Math.cos(time * 0.25 + 1.2) * 0.025;
+    if (!ESTADO.muerto) {
+      const viento = Math.sin(time * 0.35) * 0.035;
+      const viento2 = Math.cos(time * 0.25 + 1.2) * 0.025;
 
-    hebrasData.forEach((mesh) => {
-      const data = mesh.userData;
-      if (!data) return;
+      for (let i = 0; i < hebrasData.length; i++) {
+        const data = hebrasData[i];
 
-      const oscZ = Math.sin(time * data.velocidadViento + data.fase) * 0.025;
-      const oscX = Math.cos(time * data.velocidadViento * 0.7 + data.fase * 1.3) * 0.02;
+        const oscZ = Math.sin(time * data.velocidadViento + data.fase) * 0.025;
+        const oscX = Math.cos(time * data.velocidadViento * 0.7 + data.fase * 1.3) * 0.02;
 
-      mesh.rotation.z = data.inclinacionBaseZ + oscZ + viento;
-      mesh.rotation.x = data.inclinacionBaseX + oscX + viento2;
+        _pEuler.set(
+          data.inclinacionBaseX + oscX + viento2,
+          data.rotacionBaseY,
+          data.inclinacionBaseZ + oscZ + viento
+        );
+        _pQuat.setFromEuler(_pEuler);
 
-      const offsetX = Math.sin(time * data.velocidadViento * 0.4 + data.fase) * 0.003;
-      const offsetZ = Math.cos(time * data.velocidadViento * 0.5 + data.fase * 1.2) * 0.003;
-      mesh.position.x = data.posicionOriginal.x + offsetX;
-      mesh.position.z = data.posicionOriginal.z + offsetZ;
+        const offsetX = Math.sin(time * data.velocidadViento * 0.4 + data.fase) * 0.003;
+        const offsetZ = Math.cos(time * data.velocidadViento * 0.5 + data.fase * 1.2) * 0.003;
+        _pPos.set(
+          data.posicionOriginal.x + offsetX,
+          0,
+          data.posicionOriginal.z + offsetZ
+        );
 
-      const integridad = ESTADO.integridad / 100;
-      const colorTarget = new THREE.Color(
-        0.1 + integridad * 0.3,
-        0.3 + integridad * 0.5,
-        0.05 + integridad * 0.2
-      );
-      if (mesh.material.color) {
-        mesh.material.color.lerp(colorTarget, 0.01);
+        _pScale.set(data.radio, data.altura, data.radio);
+
+        _m4.compose(_pPos, _pQuat, _pScale);
+        pastoMesh.setMatrixAt(i, _m4);
       }
-    });
+
+      pastoMesh.instanceMatrix.needsUpdate = true;
+    }
   }
 
   if (anemonaGroup) {
@@ -502,26 +552,14 @@ export function actualizarVegetacion(time) {
       grupo.rotation.z = osc;
       grupo.rotation.x = Math.sin(time * data.velocidad * 0.7 + data.fase * 1.2) * 0.002;
 
-      data.tentaculos.forEach((tentaculo) => {
-        const ud = tentaculo.userData;
+      data.tentaculos.forEach((pivote) => {
+        const ud = pivote.userData;
         if (!ud) return;
 
-        const puntos = ud.puntosBase.map((p, idx) => {
-          const t = idx / ud.puntosBase.length;
-          const wave = Math.sin(time * ud.velocidad + ud.fase + t * 1.2) * ud.amplitud;
-          const ang = ud.anguloBase + t * ud.radioCurva * 0.5 + wave * 0.15;
-          const r = ud.radioBase * (1 - t * 0.7) + wave * 0.005;
-          const y = ud.alturaBase + t * data.tamaño * 0.9 + Math.sin(time * ud.velocidad * 0.6 + ud.fase + t * 0.4) * 0.004;
-
-          const px = Math.cos(ang) * r;
-          const pz = Math.sin(ang) * r;
-          return new THREE.Vector3(px, y, pz);
-        });
-
-        const curva = new THREE.CatmullRomCurve3(puntos);
-        const nuevaGeo = new THREE.TubeGeometry(curva, 8, CONFIG_ANEMONA.TENTACULO_RADIO * (0.6 + Math.random() * 0.1), 4, false);
-        tentaculo.geometry.dispose();
-        tentaculo.geometry = nuevaGeo;
+        const onda = Math.sin(time * ud.velocidad + ud.fase) * ud.amplitud;
+        pivote.rotation.x = onda * 0.6;
+        pivote.rotation.z = onda;
+        pivote.rotation.y = Math.cos(time * ud.velocidad * 0.7 + ud.fase) * ud.amplitud * 0.5;
       });
     });
   }
@@ -536,9 +574,10 @@ export function actualizarVegetacion(time) {
 }
 
 export function limpiarVegetacion() {
-  if (pastoGroup) {
-    scene.remove(pastoGroup);
-    pastoGroup = null;
+  if (pastoMesh) {
+    scene.remove(pastoMesh);
+    pastoMesh.dispose();
+    pastoMesh = null;
     hebrasData = [];
   }
   if (anemonaGroup) {

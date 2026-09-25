@@ -27,7 +27,10 @@ document.body.appendChild(renderer.domElement);
 
 export const controls = new OrbitControls(camera, renderer.domElement);
 controls.enableDamping = true;
-controls.dampingFactor = 0.05;
+controls.dampingFactor = 0.14;
+controls.rotateSpeed = 0.9;
+controls.zoomSpeed = 0.8;
+controls.panSpeed = 0.8;
 controls.minDistance = 3;
 controls.maxDistance = 18;
 controls.maxPolarAngle = Math.PI / 2.1;
@@ -75,8 +78,6 @@ guardian.add(led);
 guardian.position.set(0, 0, 0);
 scene.add(guardian);
 
-crearColumnas();
-crearTerreno();
 
 const raycaster = new THREE.Raycaster();
 

@@ -8,9 +8,16 @@ import { datosColumna } from './datos.js';
 export const flores = [];
 const TIPOS_FLOR = ['señal', 'resonancia', 'fractura', 'deriva'];
 
+const _cacheTexturasFlor = new Map();
+
 function crearTexturaFlor(tipo, color) {
-  const canvas = document.createElement('canvas');
-  canvas.width = 256;
+  const colorHex = new THREE.Color(color).getHex();
+  const cacheKey = `${tipo}_${colorHex}`;
+  if (_cacheTexturasFlor.has(cacheKey)) {
+    return _cacheTexturasFlor.get(cacheKey);
+  }
+
+  const canvas = document.createElement('canvas');  canvas.width = 256;
   canvas.height = 256;
   const ctx = canvas.getContext('2d');
   ctx.clearRect(0, 0, 256, 256);
@@ -109,6 +116,7 @@ function crearTexturaFlor(tipo, color) {
 
   const texture = new THREE.CanvasTexture(canvas);
   texture.needsUpdate = true;
+  _cacheTexturasFlor.set(cacheKey, texture);
   return texture;
 }
 

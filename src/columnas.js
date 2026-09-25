@@ -246,16 +246,23 @@ export function crearColumnas() {
 export function activarRuina() {
   columnasMovimiento.forEach(col => {
     col.userData.enRuina = true;
-    col.rotation.x = -Math.PI / 2;
-    col.rotation.z = 0;
+    const movil = col.userData.movilGroup;
+    if (movil) {
+      movil.rotation.x = -Math.PI / 2;
+      movil.rotation.z = 0;
+    }
   });
 }
 
 export function desactivarRuina() {
   columnasMovimiento.forEach(col => {
     col.userData.enRuina = false;
-    col.rotation.x = 0;
-    col.rotation.z = 0;
+    const movil = col.userData.movilGroup;
+    if (movil) {
+      movil.rotation.x = 0;
+      movil.rotation.z = 0;
+      movil.position.y = 0.2;
+    }
   });
 }
 
@@ -367,13 +374,13 @@ export function animarColumnas(time) {
     if (!movil) return;
 
     if (d.enRuina || ESTADO.muerto) {
-      col.rotation.x = -Math.PI / 2;
-      col.rotation.z = 0;
+      movil.rotation.x = -Math.PI / 2;
+      movil.rotation.z = 0;
       return;
     }
 
-    col.rotation.x = 0;
-    col.rotation.z = 0;
+    movil.rotation.x = 0;
+    movil.rotation.z = 0;
     const offset = i * 0.8;
 
     if (label === 'RESONANCIA') {
@@ -453,7 +460,10 @@ export function animarCorrupcionColumnas(tiempo) {
   columnas.forEach((col) => {
     const off = Math.random() * 0.5;
     const forma = col.userData.forma;
-    col.position.y = muerto ? -0.15 : Math.sin(tiempo * 0.5 + off) * 0.04;
+    const movil = col.userData.movilGroup;
+    if (movil && muerto) {
+      movil.position.y = 0.05;
+    }
 
     if (forma === 'cubos' && col.userData.elementos) {
       col.userData.elementos.forEach(c => {
