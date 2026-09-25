@@ -174,7 +174,7 @@ function construirMushi(identidad) {
   const baseSize = CONFIG.TAMANO_BASE;
   const bodyScale = morphology.bodyScale * baseSize * 0.17;
 
-  const mantleGeo = new THREE.SphereGeometry(bodyScale, 10, 7);
+  const mantleGeo = new THREE.SphereGeometry(bodyScale, 8, 6);
   mantleGeo.scale(
     1.05 + morphology.asymmetry * 0.22,
     0.78 + morphology.asymmetry * 0.10,
@@ -185,7 +185,7 @@ function construirMushi(identidad) {
   mantle.userData = { esMantoMushi: true };
   group.add(mantle);
 
-  const coronaGeo = new THREE.SphereGeometry(bodyScale * 0.72, 9, 6);
+  const coronaGeo = new THREE.SphereGeometry(bodyScale * 0.72, 7, 5);
   coronaGeo.scale(1.0, 0.42, 1.0);
 
   const corona = new THREE.Mesh(coronaGeo, matCuerpo);
@@ -201,8 +201,8 @@ function construirMushi(identidad) {
     const pliegue = new THREE.Mesh(
       new THREE.SphereGeometry(
         bodyScale * (0.16 + (i % 2) * 0.025),
-        6,
-        5
+        5,
+        4
       ),
       matCuerpo
     );
@@ -297,7 +297,7 @@ function construirMushi(identidad) {
         radius * 0.82,
         radius,
         len,
-        7
+        5
       );
 
       const mesh = new THREE.Mesh(
@@ -314,8 +314,8 @@ function construirMushi(identidad) {
       const joint = new THREE.Mesh(
         new THREE.SphereGeometry(
           radius * 0.95,
-          6,
-          5
+          5,
+          4
         ),
         matCuerpo
       );
@@ -388,9 +388,9 @@ function construirMushi(identidad) {
     const tube = new THREE.Mesh(
       new THREE.TubeGeometry(
         new THREE.CatmullRomCurve3(pts),
-        10,
+        8,
         bodyScale * 0.035,
-        6,
+        5,
         false
       ),
       matExtremidad
@@ -486,7 +486,7 @@ function construirKaku(identidad) {
   const cuerpoGeo = new THREE.SphereGeometry(
     baseSize * 0.35,
     8,
-    8
+    6
   );
 
   cuerpoGeo.scale(1.6, 2.4, 0.6);
@@ -524,8 +524,8 @@ function construirKaku(identidad) {
 
     const segGeo = new THREE.SphereGeometry(
       radio,
-      5,
-      5
+      4,
+      4
     );
 
     segGeo.scale(
@@ -670,7 +670,7 @@ function construirKaku(identidad) {
       new THREE.Mesh(
         new THREE.TubeGeometry(
           curva,
-          10,
+          8,
           0.005,
           3,
           false
@@ -708,8 +708,8 @@ function construirKaku(identidad) {
       new THREE.Mesh(
         new THREE.SphereGeometry(
           0.018,
-          6,
-          6
+          5,
+          4
         ),
         matOjos
       );
@@ -862,8 +862,8 @@ function construirOru(identidad) {
   const cuerpoGeo =
     new THREE.SphereGeometry(
       baseSize * 0.27,
-      10,
-      8
+      8,
+      6
     );
 
   cuerpoGeo.scale(
@@ -891,8 +891,8 @@ function construirOru(identidad) {
     new THREE.Mesh(
       new THREE.SphereGeometry(
         baseSize * 0.23,
-        9,
-        7
+        7,
+        5
       ),
       matAzul
     );
@@ -937,8 +937,8 @@ function construirOru(identidad) {
       new THREE.Mesh(
         new THREE.SphereGeometry(
           baseSize * 0.035,
-          6,
-          6
+          5,
+          4
         ),
         matOjo
       );
@@ -1859,6 +1859,15 @@ function wrapAngle(a) {
   return a;
 }
 
+const _vDesired = new THREE.Vector3();
+const _vForward = new THREE.Vector3();
+const _vLateral = new THREE.Vector3();
+const _vForwardAxis = new THREE.Vector3();
+const _vUp = new THREE.Vector3(0, 1, 0);
+const _vForwardBase = new THREE.Vector3(-1, 0, 0);
+const _vLateralBase = new THREE.Vector3(0, 0, 1);
+
+
 function nadar(
   entry,
   timeNow,
@@ -1990,10 +1999,7 @@ function nadar(
     f.objetivo.copy(pos);
   }
 
-  const desired =
-    f.objetivo
-      .clone()
-      .sub(pos);
+  const desired = _vDesired.copy(f.objetivo).sub(pos);
 
   desired.y = 0;
 
@@ -2069,22 +2075,8 @@ function nadar(
         slowRadius
     );
 
-  const forward =
-    new THREE.Vector3(
-      -1,
-      0,
-      0
-    );
-
-  forward.applyAxisAngle(
-    new THREE.Vector3(
-      0,
-      1,
-      0
-    ),
-    f.heading
-  );
-
+  const forward = _vForward.copy(_vForwardBase);
+  forward.applyAxisAngle(_vUp, f.heading);
   forward.normalize();
 
   const targetVelocity =
@@ -2253,33 +2245,9 @@ function nadar(
     dt
   );
 
-  const lateralAxis =
-    new THREE.Vector3(
-      0,
-      0,
-      1
-    ).applyAxisAngle(
-      new THREE.Vector3(
-        0,
-        1,
-        0
-      ),
-      f.heading
-    );
+  const lateralAxis = _vLateral.copy(_vLateralBase).applyAxisAngle(_vUp, f.heading);
 
-  const forwardAxis =
-    new THREE.Vector3(
-      -1,
-      0,
-      0
-    ).applyAxisAngle(
-      new THREE.Vector3(
-        0,
-        1,
-        0
-      ),
-      f.heading
-    );
+  const forwardAxis = _vForwardAxis.copy(_vForwardBase).applyAxisAngle(_vUp, f.heading);
 
   const lateralSpeed =
     f.velocidad.dot(
@@ -2333,7 +2301,7 @@ function nadar(
     );
 
   grupo.rotation.y =
-    f.heading;
+    f.heading + (tipo === 'oru' ? Math.PI : 0);
 
   return f;
 }
@@ -2411,6 +2379,9 @@ export function actualizarCriaturas(
     }
   }
 
+
+   const _fase = (Math.floor(time * 60) % 2);
+
   for (
     let i =
       mushis.length - 1;
@@ -2421,7 +2392,9 @@ export function actualizarCriaturas(
       mushis[i];
 
     m.vida -=
-      0.015;
+      0.015 * (i % 2 === _fase ? 2 : 1);
+
+    if (i % 2 !== _fase) continue;
 
     const grupo =
       m.grupo;
@@ -2615,6 +2588,16 @@ export function actualizarCriaturas(
         m.vida
       );
     }
+  }
+
+  for (
+    let i =
+      mushis.length - 1;
+    i >= 0;
+    i--
+  ) {
+    const m =
+      mushis[i];
 
     if (
       m.vida <= 0
@@ -2622,7 +2605,7 @@ export function actualizarCriaturas(
       if (m.sonido)
         m.sonido.detener();
 
-      grupo.children.forEach(
+      m.grupo.children.forEach(
         child => {
           if (
             child.material
@@ -2634,7 +2617,7 @@ export function actualizarCriaturas(
       );
 
       if (
-        grupo.children.every(
+        m.grupo.children.every(
           c =>
             !c.material ||
             c.material.opacity <
@@ -2642,7 +2625,7 @@ export function actualizarCriaturas(
         )
       ) {
         scene.remove(
-          grupo
+          m.grupo
         );
 
         mushis.splice(
@@ -2691,7 +2674,7 @@ export function actualizarCriaturas(
     }
   }
 
-  for (
+   for (
     let i =
       kakus.length - 1;
     i >= 0;
@@ -2701,167 +2684,169 @@ export function actualizarCriaturas(
       kakus[i];
 
     k.vida -=
-      0.015;
+      0.015 * (i % 2 === _fase ? 2 : 1);
 
-    const grupo =
-      k.grupo;
+    if (i % 2 === _fase) {
+      const grupo =
+        k.grupo;
 
-    const ident =
-      k.identidad;
+      const ident =
+        k.identidad;
 
-    const f =
-      nadar(
-        k,
-        time,
-        'kaku'
-      );
+      const f =
+        nadar(
+          k,
+          time,
+          'kaku'
+        );
 
-    const metachronal =
-      time * 12.0;
+      const metachronal =
+        time * 12.0;
 
-    grupo.traverse(
-      child => {
-        const ud =
-          child.userData ||
-          {};
+      grupo.traverse(
+        child => {
+          const ud =
+            child.userData ||
+            {};
 
-        if (
-          ud.esAntena
-        ) {
-          const flex =
-            0.08 +
-            f.velocidad.length() *
-              0.2;
+          if (
+            ud.esAntena
+          ) {
+            const flex =
+              0.08 +
+              f.velocidad.length() *
+                0.2;
 
-          child.rotation.z =
-            Math.sin(
-              time * 3.0 +
-                ud.lado *
-                  0.7
-            ) *
-            flex;
+            child.rotation.z =
+              Math.sin(
+                time * 3.0 +
+                  ud.lado *
+                    0.7
+              ) *
+              flex;
 
-          child.rotation.y =
-            Math.cos(
-              time * 2.5 +
-                ud.lado
-            ) *
-            flex *
-            0.8;
-        }
+            child.rotation.y =
+              Math.cos(
+                time * 2.5 +
+                  ud.lado
+              ) *
+              flex *
+              0.8;
+          }
 
-        if (
-          ud.esPata
-        ) {
-          const fase =
-            metachronal -
-            ud.i * 0.72 -
-            ud.segmento * 0.30 +
-            ud.lado * 0.15;
+          if (
+            ud.esPata
+          ) {
+            const fase =
+              metachronal -
+              ud.i * 0.72 -
+              ud.segmento * 0.30 +
+              ud.lado * 0.15;
 
-          const onda =
-            Math.sin(
-              fase
-            );
+            const onda =
+              Math.sin(
+                fase
+              );
 
-          const recuperación =
-            Math.sin(
-              fase +
-                Math.PI *
-                  0.55
-            );
+            const recuperación =
+              Math.sin(
+                fase +
+                  Math.PI *
+                    0.55
+              );
 
-          const esfuerzo =
-            0.15 +
-            f.velocidad.length() *
-              0.3;
-
-          child.rotation.z =
-            ud.lado *
-            (
-              0.25 +
-              onda *
-                (
-                  0.3 +
-                  ud.segmento *
-                    0.06
-                ) *
-                (
-                  0.7 +
-                  esfuerzo
-                )
-            );
-
-          child.rotation.x =
-            recuperación *
-            (
-              0.1 +
-              ud.segmento *
-                0.03
-            );
-        }
-
-        if (
-          ud.esCola
-        ) {
-          child.rotation.y =
-            Math.sin(
-              time * 6.0 +
-                ud.lado *
-                  0.8
-            ) *
-            (
+            const esfuerzo =
               0.15 +
-              f.velocidadAngular *
-                0.05
-            );
+              f.velocidad.length() *
+                0.3;
 
-          child.rotation.z =
-            Math.cos(
-              time * 5.0 +
-                ud.lado
-            ) *
-            0.1;
+            child.rotation.z =
+              ud.lado *
+              (
+                0.25 +
+                onda *
+                  (
+                    0.3 +
+                    ud.segmento *
+                      0.06
+                  ) *
+                  (
+                    0.7 +
+                    esfuerzo
+                  )
+              );
+
+            child.rotation.x =
+              recuperación *
+              (
+                0.1 +
+                ud.segmento *
+                  0.03
+              );
+          }
+
+          if (
+            ud.esCola
+          ) {
+            child.rotation.y =
+              Math.sin(
+                time * 6.0 +
+                  ud.lado *
+                    0.8
+              ) *
+              (
+                0.15 +
+                f.velocidadAngular *
+                  0.05
+              );
+
+            child.rotation.z =
+              Math.cos(
+                time * 5.0 +
+                  ud.lado
+              ) *
+              0.1;
+          }
+
+          if (
+            ud.esCuerpoKaku
+          ) {
+            child.rotation.z =
+              Math.sin(
+                time * 5.0 -
+                  ud.idx *
+                    0.55
+              ) *
+              0.05;
+
+            child.position.y +=
+              Math.sin(
+                time * 5.0 -
+                  ud.idx *
+                    0.55
+              ) *
+              0.0005;
+          }
         }
-
-        if (
-          ud.esCuerpoKaku
-        ) {
-          child.rotation.z =
-            Math.sin(
-              time * 5.0 -
-                ud.idx *
-                  0.55
-            ) *
-            0.05;
-
-          child.position.y +=
-            Math.sin(
-              time * 5.0 -
-                ud.idx *
-                  0.55
-            ) *
-            0.0005;
-        }
-      }
-    );
-
-    grupo.rotation.x +=
-      Math.sin(
-        time * 3.5 +
-          ident.seed
-      ) *
-      0.002;
-
-    if (k.sonido) {
-      k.sonido.update(
-        time,
-        grupo.position,
-        0.5 +
-          f.velocidad.length() *
-            8,
-        k.vida
       );
+
+      grupo.rotation.x +=
+        Math.sin(
+          time * 3.5 +
+            ident.seed
+        ) *
+        0.002;
+
+      if (k.sonido) {
+        k.sonido.update(
+          time,
+          grupo.position,
+          0.5 +
+            f.velocidad.length() *
+              8,
+          k.vida
+        );
+      }
     }
 
     if (
@@ -2870,7 +2855,7 @@ export function actualizarCriaturas(
       if (k.sonido)
         k.sonido.detener();
 
-      grupo.children.forEach(
+      k.grupo.children.forEach(
         child => {
           if (
             child.material
@@ -2882,7 +2867,7 @@ export function actualizarCriaturas(
       );
 
       if (
-        grupo.children.every(
+        k.grupo.children.every(
           c =>
             !c.material ||
             c.material.opacity <
@@ -2890,7 +2875,7 @@ export function actualizarCriaturas(
         )
       ) {
         scene.remove(
-          grupo
+          k.grupo
         );
 
         kakus.splice(
@@ -2901,11 +2886,12 @@ export function actualizarCriaturas(
     }
   }
 
-  ORU.criaturas.forEach(
-    oru => {
+    ORU.criaturas.forEach(
+    (oru, i) => {
+      if (i % 2 !== _fase) return;
+
       const grupo =
         oru.grupo;
-
       const ident =
         oru.identidad;
 
@@ -2915,6 +2901,7 @@ export function actualizarCriaturas(
           time,
           'oru'
         );
+
 
       grupo.traverse(
         child => {
@@ -3039,25 +3026,16 @@ export function actualizarCriaturas(
 export function iniciarCriaturas() {
   escucharKakus();
 
-  console.log(
-    '🦗 Criaturas OK'
-  );
+  programarOru();
+
+  if (!ESTADO.muerto && ESTADO.vida > 5) {
+    crearOru();
+    crearOru();
+  }
+
+  console.log('🦗 Criaturas OK');
 }
 
 console.log(
   '✅ criaturas OK'
 );
-
-(() => {
-  programarOru();
-
-  setTimeout(() => {
-    if (
-      !ESTADO.muerto &&
-      ESTADO.vida > 5
-    ) {
-      crearOru();
-      crearOru();
-    }
-  }, 1000);
-})();

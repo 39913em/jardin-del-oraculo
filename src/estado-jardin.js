@@ -3,6 +3,7 @@ import { firebaseConfig } from './firebase-config.js';
 import { initializeApp } from 'https://www.gstatic.com/firebasejs/12.8.0/firebase-app.js';
 import { getDatabase, ref, get, set, update, onValue, push } from 'https://www.gstatic.com/firebasejs/12.8.0/firebase-database.js';
 
+
 const app = initializeApp(firebaseConfig);
 const db = getDatabase(app);
 const dbEstado = ref(db, 'poesia');
@@ -194,6 +195,9 @@ export function escucharEstado() {
       if (d.muerto && !eraMuerto) {
         activarRuina();
         mostrarOverlayMuerte();
+        ESTADO.mensajes = [];
+        mensajesRenderizados.clear();
+        limpiarMensajesFlotantes();
       }
       if (!d.muerto && eraMuerto) {
         desactivarRuina();
@@ -221,6 +225,7 @@ export function cambiarVida(cantidad) {
     ESTADO.integridad = 0;
     ESTADO.mensajes = [];
     mensajesRenderizados.clear();
+    limpiarMensajesFlotantes();
     activarRuina();
     mostrarOverlayMuerte();
     guardarEstado();
@@ -256,6 +261,7 @@ export async function revivirOráculo(origen = 'semilla') {
     ESTADO.ciclos++;
     ESTADO.haikusParaRevivir = 0;
     mensajesRenderizados.clear();
+    limpiarMensajesFlotantes();
 
     sincronizarFlores();
 
@@ -278,12 +284,40 @@ export async function revivirOráculo(origen = 'semilla') {
   }
 }
 
+let _activarRuinaReal = null;
+let _desactivarRuinaReal = null;
+
+export function setRuinaHandlers(activar, desactivar) {
+  _activarRuinaReal = activar;
+  _desactivarRuinaReal = desactivar;
+}
+
+let _limpiarMensajesFlotantesReal = null;
+
+export function setMensajesHandlers(limpiar) {
+  _limpiarMensajesFlotantesReal = limpiar;
+}
+
+function limpiarMensajesFlotantes() {
+  if (_limpiarMensajesFlotantesReal) {
+    _limpiarMensajesFlotantesReal();
+  }
+}
+
 export function activarRuina() {
-  console.log('🏚️ Ruina activada');
+  if (_activarRuinaReal) {
+    _activarRuinaReal();
+  } else {
+    console.log('🏚️ Ruina activada (sin handler)');
+  }
 }
 
 export function desactivarRuina() {
-  console.log('🌱 Ruina desactivada');
+  if (_desactivarRuinaReal) {
+    _desactivarRuinaReal();
+  } else {
+    console.log('🌱 Ruina desactivada (sin handler)');
+  }
 }
 
 export async function iniciarEstado() {

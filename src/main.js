@@ -7,6 +7,8 @@ import { iniciarCriaturas, actualizarCriaturas } from './criaturas.js';
 import { crearParticulas } from './particulas.js';
 import { crearVegetacion } from './vegetacion.js';
 import { crearFondo } from './fondo.js';
+import { crearColumnas, activarRuina as activarRuinaColumnas, desactivarRuina as desactivarRuinaColumnas } from './columnas.js';
+import { crearTerreno } from './terreno.js';
 
 import {
   ESTADO,
@@ -15,11 +17,13 @@ import {
   avisoTemporal,
   escucharEstado,
   cargarEstado,
-  setSincronizarFlores
+  setSincronizarFlores,
+  setRuinaHandlers,
+  setMensajesHandlers
 } from './estado-jardin.js';
 
 import { sincronizarFlores } from './flores.js';
-import { escucharVerso, escucharMensajes } from './flotantes.js';
+import { escucharVerso, escucharMensajes, limpiarMensajesFlotantes } from './flotantes.js';
 
 import { initAudio } from './sonido.js';
 
@@ -40,30 +44,31 @@ export { cambiarVidaConEscena as cambiarVida };
 
 async function iniciarTodo() {
   console.log('🚀 Iniciando Jardín del Oráculo...');
-  
-  await cargarEstado();
-  console.log('✅ Estado OK, vida:', ESTADO.vida);
-  
-  sincronizarFlores();
-  setSincronizarFlores(sincronizarFlores);
 
+  setRuinaHandlers(activarRuinaColumnas, desactivarRuinaColumnas);
+  setMensajesHandlers(limpiarMensajesFlotantes);
+
+
+  const cargaEstado = cargarEstado();
+
+  crearColumnas();
+  crearTerreno();
   crearParticulas();
   crearVegetacion();
-
   crearFondo();
-  
-  escucharEstado();
 
-  escucharVerso();
-  
-  escucharMensajes();
-  
-  initAudio();
+  await cargaEstado;
+  console.log('✅ Estado OK, vida:', ESTADO.vida);
 
+  sincronizarFlores();
+  setSincronizarFlores(sincronizarFlores);
   iniciarCriaturas();
-
+  escucharEstado();
+  escucharVerso();
+  escucharMensajes();
+  initAudio();
   configurarBotones();
-  
+
   console.log('🌿 Jardín OK.');
 }
 
@@ -76,3 +81,23 @@ document.addEventListener('DOMContentLoaded', () => {
 
 export { actualizarCriaturas };
 export { db, app };
+
+if (new URLSearchParams(location.search).get('fps') === '1') {
+  const hud = document.getElementById('fps-hud');
+  if (hud) {
+    hud.style.display = 'block';
+    let frames = 0;
+    let last = performance.now();
+    function loop() {
+      frames++;
+      const now = performance.now();
+      if (now - last >= 1000) {
+        hud.textContent = `FPS: ${frames} · ${(1000 / (now - last) * frames).toFixed(0)}`;
+        frames = 0;
+        last = now;
+      }
+      requestAnimationFrame(loop);
+    }
+    loop();
+  }
+}

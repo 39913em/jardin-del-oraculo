@@ -165,19 +165,7 @@ export function crearFondo() {
 export function actualizarFondo(time) {
   if (!fondoGroup) return;
 
-  const estrellas = fondoGroup.getObjectByName('estrellas');
-  if (estrellas && estrellas.isPoints && estrellasData.geometry) {
-    const sizes = estrellasData.geometry.attributes.size;
-    if (sizes) {
-      const array = sizes.array;
-      for (let i = 0; i < array.length; i++) {
-        const phase = estrellasData.phases[i] || 0;
-        const parpadeo = 0.6 + 0.4 * Math.sin(time * (0.5 + i * 0.001) + phase);
-        array[i] = estrellasData.sizes[i] * parpadeo;
-      }
-      sizes.needsUpdate = true;
-    }
-  }
+ 
 
   if (auroraMesh && auroraMesh.material) {
     const integridad = ESTADO.integridad / 100;

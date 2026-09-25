@@ -1,4 +1,3 @@
-
 export const firebaseConfig = {
   apiKey: "AIzaSyC42arLXTaQs_mdXEUyc58ge2SdZVKtm4A",
   authDomain: "archivo-senal-poesia-test.firebaseapp.com",
