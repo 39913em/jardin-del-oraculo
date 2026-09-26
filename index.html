@@ -180,12 +180,27 @@
       transition:all 0.2s ease;
     }
     #panel-compartir .botones a:hover { transform:scale(1.05); }
-    #verso-compartir-imagen {
-      display:block; width:100%; max-width:280px; margin:14px auto 4px;
+    #tarjeta-preview-wrap {
+      width:100%; max-width:280px; margin:14px auto 4px;
       border-radius:10px; border:1px solid #282840;
-      aspect-ratio:4/5; object-fit:cover; background:#0a0a0a;
+      aspect-ratio:4/5; background:#0a0a0a; overflow:hidden;
+      position:relative;
     }
-    #verso-compartir-imagen:not([src]) { display:none; }
+    #tarjeta-preview-wrap.cargando {
+      background: linear-gradient(100deg, #14141e 30%, #1f1f2e 45%, #14141e 60%);
+      background-size: 250% 100%;
+      animation: skeleton-shimmer 1.3s ease-in-out infinite;
+    }
+    @keyframes skeleton-shimmer {
+      0% { background-position: 150% 0; }
+      100% { background-position: -50% 0; }
+    }
+    #verso-compartir-imagen {
+      display:block; width:100%; height:100%;
+      object-fit:cover;
+      opacity:0; transition:opacity .25s ease;
+    }
+    #verso-compartir-imagen.lista { opacity:1; }
     #panel-compartir .btn-cerrar-panel {
       margin-top:14px; background:none; border:none;
       color:#666; font-size:12px; cursor:pointer; font-family:inherit;
@@ -452,7 +467,9 @@
     <div class="texto" id="verso-compartir-texto">"Sembrar una semilla en el Jardín"</div>
     <div class="autor" id="verso-compartir-autor">— ORÁCULO</div>
 
-    <img id="verso-compartir-imagen" alt="Tarjeta con el verso para compartir" />
+    <div id="tarjeta-preview-wrap" class="cargando">
+      <img id="verso-compartir-imagen" alt="Tarjeta con el verso para compartir" />
+    </div>
     <div class="botones" id="tarjeta-compartir-acciones"></div>
 
     <button class="btn-cerrar-panel" onclick="document.getElementById('panel-compartir').classList.remove('visible')">CERRAR</button>
