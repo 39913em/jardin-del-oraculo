@@ -166,7 +166,7 @@ export function crearMensaje(texto) {
     angulo: ang,
     texto: texto,
     esMensaje: true,
-    autor: 'RAYO',
+    autor: 'PLEGARIA',
   };
   scene.add(sprite);
   mensajesFlotantes.push(sprite);
@@ -223,65 +223,40 @@ export function iniciarInteraccionFlotantes() {
     raycaster.setFromCamera(mouse, camera);
 
     const todos = [...versosFlotantes, ...mensajesFlotantes];
-    if (!todos.length) return false;
+    if (!todos.length) return;
     const hits = raycaster.intersectObjects(todos);
     if (hits.length) {
       const sprite = hits[0].object;
       const texto = sprite.userData.texto || 'sin texto';
       const autor = sprite.userData.autor || 'ORÁCULO';
       generarBotonesCompartir(texto, autor, false);
-      return true;
     }
-    return false;
   }
 
-  // Ratón/trackpad: dblclick nativo funciona bien.
-  renderer.domElement.addEventListener('dblclick', e => {
-    intentarCompartirEn(e.clientX, e.clientY);
-  });
+  // UN SOLO mecanismo de detección, para mouse y táctil por igual: el evento
+  // 'click' es el único que el navegador dispara de forma consistente en
+  // ambos casos (a diferencia de 'dblclick', que en móvil es poco confiable).
+  // Antes había DOS caminos por separado (dblclick nativo + touchstart/touchend
+  // a mano) y en algunos navegadores móviles los dos llegaban a dispararse
+  // para el mismo doble-tap, abriendo el panel dos veces. Con un solo
+  // listener eso ya no puede pasar.
+  let ultimoClicTiempo = 0;
+  let ultimoClicX = 0;
+  let ultimoClicY = 0;
 
-  // Táctil: dblclick NO se dispara de forma confiable en la mayoría de
-  // navegadores móviles, así que se detecta el doble-tap a mano —
-  // dos toques cortos, cerca en tiempo y en posición, sin que de por
-  // medio haya habido un arrastre (que es como OrbitControls rota la cámara).
-  let ultimoTapTiempo = 0;
-  let ultimoTapX = 0;
-  let ultimoTapY = 0;
-  let tocando = false;
-  let inicioTocandoX = 0;
-  let inicioTocandoY = 0;
-
-  renderer.domElement.addEventListener('touchstart', e => {
-    if (e.touches.length !== 1) { tocando = false; return; }
-    tocando = true;
-    inicioTocandoX = e.touches[0].clientX;
-    inicioTocandoY = e.touches[0].clientY;
-  }, { passive: true });
-
-  renderer.domElement.addEventListener('touchend', e => {
-    if (!tocando) return;
-    tocando = false;
-    const toque = e.changedTouches[0];
-    if (!toque) return;
-
-    // si el dedo se movió mucho, fue un arrastre de cámara, no un tap
-    const distArrastre = Math.hypot(toque.clientX - inicioTocandoX, toque.clientY - inicioTocandoY);
-    if (distArrastre > 12) return;
-
+  renderer.domElement.addEventListener('click', e => {
     const ahora = Date.now();
-    const distEntreTaps = Math.hypot(toque.clientX - ultimoTapX, toque.clientY - ultimoTapY);
+    const dist = Math.hypot(e.clientX - ultimoClicX, e.clientY - ultimoClicY);
 
-    if (ahora - ultimoTapTiempo < 350 && distEntreTaps < 40) {
-      if (intentarCompartirEn(toque.clientX, toque.clientY)) {
-        e.preventDefault(); // evita que el navegador interprete un zoom/click fantasma
-      }
-      ultimoTapTiempo = 0; // reset: no encadenar un tercer tap como otro doble-tap
+    if (ahora - ultimoClicTiempo < 350 && dist < 40) {
+      intentarCompartirEn(e.clientX, e.clientY);
+      ultimoClicTiempo = 0; // reset: evita que un tercer clic cuente como otro doble-clic
     } else {
-      ultimoTapTiempo = ahora;
-      ultimoTapX = toque.clientX;
-      ultimoTapY = toque.clientY;
+      ultimoClicTiempo = ahora;
+      ultimoClicX = e.clientX;
+      ultimoClicY = e.clientY;
     }
-  }, { passive: false });
+  });
 }
 
 
