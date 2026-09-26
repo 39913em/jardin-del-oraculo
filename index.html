@@ -82,26 +82,26 @@
     #btn-sembrar:hover { background:#ff8a55; }
     #btn-poesia { background:rgba(255,107,53,0.1); color:#ff6b35; border:1px solid #ff6b35; }
     #btn-poesia:hover { background:rgba(255,107,53,0.2); }
-    #btn-rayar { background:rgba(255,255,255,0.05); color:#888; border:1px solid #333; }
-    #btn-rayar:hover { background:rgba(255,255,255,0.1); color:#fff; }
+    #btn-plegaria { background:rgba(255,255,255,0.05); color:#888; border:1px solid #333; }
+    #btn-plegaria:hover { background:rgba(255,255,255,0.1); color:#fff; }
     #btn-instrucciones { background:rgba(255,107,53,0.05); color:#666; border:1px solid #333; }
     #btn-instrucciones:hover { background:rgba(255,107,53,0.1); color:#ff6b35; }
 
-    #input-rayar {
+    #input-plegaria {
       position:fixed; bottom:120px; left:50%; transform:translateX(-50%);
       z-index:95; background:rgba(10,10,10,0.95);
       border:1px solid #ff6b35; border-radius:8px;
       padding:12px 16px; display:none; width:90%; max-width:340px;
       backdrop-filter:blur(10px); box-shadow:0 0 30px rgba(0,0,0,0.9);
     }
-    #input-rayar.visible { display:block; }
-    #input-rayar textarea {
+    #input-plegaria.visible { display:block; }
+    #input-plegaria textarea {
       width:100%; height:60px; background:#111; color:#fff;
       border:1px solid #333; border-radius:6px; padding:8px;
       font-family:inherit; resize:none;
     }
-    #input-rayar .fila { display:flex; gap:8px; margin-top:8px; }
-    #input-rayar .fila button {
+    #input-plegaria .fila { display:flex; gap:8px; margin-top:8px; }
+    #input-plegaria .fila button {
       flex:1; padding:6px; border-radius:14px; border:none;
       font-family:inherit; font-size:11px; font-weight:bold; cursor:pointer;
     }
@@ -196,7 +196,7 @@
       #estado { font-size:9px; padding:8px 10px; min-width:100px; top:60px; right:8px; }
       #grupo-botones { bottom:70px; left:20px; padding:8px 12px; gap:8px; }
       #grupo-botones .btn-accion { font-size:8px; padding:3px 10px; }
-      #input-rayar { bottom:110px; max-width:90%; }
+      #input-plegaria { bottom:110px; max-width:90%; }
       #panel-compartir { padding:20px; max-width:95%; }
       #panel-compartir .texto { font-size:15px; }
     }
@@ -408,22 +408,22 @@
   <div id="grupo-botones">
     <button id="btn-sembrar" class="btn-accion">SEMBRAR</button>
     <button id="btn-poesia" class="btn-accion">HAIKU</button>
-    <button id="btn-rayar" class="btn-accion">RAYAR</button>
+    <button id="btn-plegaria" class="btn-accion">PLEGARIA</button>
     <button id="btn-instrucciones" class="btn-accion">AYUDA</button>
   </div>
 
-  <div id="input-rayar">
-    <textarea id="mensaje-rayar" maxlength="140" placeholder="Escribe una palabra o frase..."></textarea>
+  <div id="input-plegaria">
+    <textarea id="mensaje-plegaria" maxlength="140" placeholder="Escribe una palabra o frase..."></textarea>
     <div class="fila">
-      <button id="enviar-rayar" style="background:#ff6b35;color:#000">ENVIAR</button>
-      <button id="cerrar-rayar" style="background:transparent;border:1px solid #333;color:#888">CERRAR</button>
+      <button id="enviar-plegaria" style="background:#ff6b35;color:#000">ENVIAR</button>
+      <button id="cerrar-plegaria" style="background:transparent;border:1px solid #333;color:#888">CERRAR</button>
     </div>
   </div>
 
   <div id="panel-instrucciones">
     <button onclick="document.getElementById('panel-instrucciones').classList.remove('visible')" style="position:absolute;top:10px;right:14px;border:none;background:none;color:#666;font-size:16px;cursor:pointer">✕</button>
     <h4>JARDÍN DEL ORÁCULO</h4>
-    <p>SEMBRAR → comparte y siembra una semilla (1 revive el jardín).<br>HAIKU → genera un haiku flotante y da vida al jardín.<br>RAYAR → deja un mensaje en la sala.<br>Doble clic en cualquier verso o mensaje → compartir.<br>El jardín solo muere si eliminas todas sus flores.<br>La integridad refleja el equilibrio entre vida y acción.</p>
+    <p>SEMBRAR → comparte y siembra una semilla (1 revive el jardín).<br>HAIKU → genera un haiku flotante y da vida al jardín.<br>PLEGARIA → deja un mensaje en la sala.<br>Doble clic en cualquier verso o mensaje → compartir.<br>El jardín solo muere si eliminas todas sus flores.<br>La integridad refleja el equilibrio entre vida y acción.</p>
   </div>
 
   <div id="overlay-muerte">
@@ -455,8 +455,6 @@
     <img id="verso-compartir-imagen" alt="Tarjeta con el verso para compartir" />
     <div class="botones" id="tarjeta-compartir-acciones"></div>
 
-    <div style="color:#555;font-size:9px;margin-top:14px;letter-spacing:1px;text-transform:uppercase;">o compartir como enlace</div>
-    <div class="botones" id="botones-compartir"></div>
     <button class="btn-cerrar-panel" onclick="document.getElementById('panel-compartir').classList.remove('visible')">CERRAR</button>
   </div>
 
@@ -499,6 +497,13 @@
   </script>
 
   <script type="module" src="src/main.js"></script>
+
+<div id="modal-legal" hidden>
+  <div class="modal-legal__contenido">
+    <button id="modal-legal-cerrar" aria-label="Cerrar">×</button>
+    <div id="modal-legal-texto"></div>
+  </div>
+</div>
 
 <button id="btn-ir-arriba" hidden aria-label="Ir arriba">↑</button>
 

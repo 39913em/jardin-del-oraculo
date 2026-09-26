@@ -1,4 +1,4 @@
-// Genera una imagen (PNG) tipo "tarjeta" con el haiku o rayón seleccionado,
+// Genera una imagen (PNG) tipo "tarjeta" con el haiku o plegaria seleccionado,
 // pensada para compartirse nativamente en Instagram/WhatsApp/Facebook —
 // el mismo patrón que usa Spotify al compartir una canción: en vez de
 // depender de que la red social arme un preview desde una URL (que además
@@ -108,7 +108,7 @@ export async function generarTarjetaCompartir(texto, autor, cat) {
   ctx.stroke();
 
   // cuerpo del verso — si es haiku (tiene ' / '), una línea por verso;
-  // si es rayón, se envuelve como párrafo normal
+  // si es plegaria, se envuelve como párrafo normal
   const esHaiku = texto.includes(' / ');
   const versos = esHaiku ? texto.split(' / ') : [texto];
 

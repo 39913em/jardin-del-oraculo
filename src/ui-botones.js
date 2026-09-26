@@ -21,17 +21,6 @@ import { ref, get, set, push } from 'https://www.gstatic.com/firebasejs/12.8.0/f
 import { playPageTurn } from './sonido.js';
 import { generarTarjetaCompartir } from './tarjeta-compartir.js';
 
-const REDES = [
-  { id: 'twitter', label: 'X', estilo: 'background:#1DA1F2;color:#fff;' },
-  { id: 'bluesky', label: 'Bluesky', estilo: 'background:#1185FE;color:#fff;' },
-  { id: 'linkedin', label: 'LinkedIn', estilo: 'background:#0A66C2;color:#fff;' },
-  { id: 'whatsapp', label: 'WhatsApp', estilo: 'background:#25D366;color:#fff;' },
-  { id: 'facebook', label: 'Facebook', estilo: 'background:#1877F2;color:#fff;' },
-  { id: 'reddit', label: 'Reddit', estilo: 'background:#FF4500;color:#fff;' },
-  { id: 'threads', label: 'Threads', estilo: 'background:#000000;color:#fff;' },
-  { id: 'substack', label: 'Substack', estilo: 'background:#FF6719;color:#fff;' }
-];
-
 let LEXICO_APROBADO = { señal:[], resonancia:[], fractura:[], deriva:[] };
 
 async function sembrar() {
@@ -54,19 +43,10 @@ export function generarBotonesCompartir(texto, autor, esSemilla = true) {
   console.log('🔍 generarBotonesCompartir llamado con:', { texto, autor, esSemilla }); // ← PARA DEPURAR
 
   const msg = esSemilla ? `"Sembrar una semilla en el Jardín" — ${autor}` : `"${texto}" — ${autor}`;
-  const url = window.location.href;
-  const cont = document.getElementById('botones-compartir');
-  if (!cont) {
-    console.warn('❌ No se encontró #botones-compartir');
-    return;
-  }
-  cont.innerHTML = '';
 
   // --- TARJETA DE IMAGEN (estilo "compartir canción" de Spotify) ---
-  // En vez de depender de que la red social arme un preview desde el link
-  // (que en Facebook ni siquiera respeta el texto pre-llenado), se genera
-  // una imagen real con el haiku/rayón adentro y se ofrece compartirla o
-  // descargarla directamente.
+  // Único método de compartir: se genera una imagen real con el haiku/plegaria
+  // adentro y se ofrece compartirla (share sheet nativo) o descargarla.
   const textoTarjeta = esSemilla ? 'Sembrar una semilla en el Jardín' : texto;
   const previewImg = document.getElementById('verso-compartir-imagen');
   const accionesImg = document.getElementById('tarjeta-compartir-acciones');
@@ -107,73 +87,11 @@ export function generarBotonesCompartir(texto, autor, esSemilla = true) {
     accionesImg.appendChild(btnDescargar);
   });
 
-  REDES.forEach(r => {
-    const a = document.createElement('a');
-    a.setAttribute('style', r.estilo + 'padding:6px 12px;border-radius:20px;text-decoration:none;font-size:10px;font-weight:bold;display:inline-flex;align-items:center;gap:4px;font-family:inherit;');
-    let href = '#';
-
-    switch (r.id) {
-      case 'twitter':
-        href = `https://twitter.com/intent/tweet?text=${encodeURIComponent(msg)}&url=${encodeURIComponent(url)}`;
-        break;
-      case 'bluesky':
-        href = `https://bsky.app/intent/compose?text=${encodeURIComponent(msg)}%20${encodeURIComponent(url)}`;
-        break;
-      case 'linkedin':
-        href = `https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(url)}`;
-        break;
-      case 'whatsapp':
-        href = `https://wa.me/?text=${encodeURIComponent(msg)}%20${encodeURIComponent(url)}`;
-        break;
-      case 'facebook':
-        href = `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(url)}&quote=${encodeURIComponent(msg)}`;
-        break;
-      case 'reddit':
-        href = `https://www.reddit.com/submit?url=${encodeURIComponent(url)}&title=${encodeURIComponent(msg)}`;
-        break;
-      case 'threads':
-        href = `https://www.threads.net/intent/post?text=${encodeURIComponent(msg)}%20${encodeURIComponent(url)}`;
-        break;
-      case 'substack':
-        href = `https://substack.com/share?url=${encodeURIComponent(url)}&text=${encodeURIComponent(msg)}`;
-        break;
-      default:
-        href = '#';
-    }
-
-    a.href = href;
-    a.target = '_blank';
-    a.rel = 'noopener noreferrer';
-    a.textContent = r.label;
-
-    a.addEventListener('click', (e) => {
-      if (href !== '#') {
-        e.preventDefault();
-        window.open(href, '_blank');
-      }
-      sembrar();
-    });
-
-    cont.appendChild(a);
-  });
-
-  const copiar = document.createElement('button');
-  copiar.textContent = 'Copiar';
-  copiar.setAttribute('style', 'padding:6px 12px;border-radius:20px;border:1px solid #555;background:#333;color:#fff;font-size:10px;font-weight:bold;cursor:pointer;font-family:inherit;');
-  copiar.addEventListener('click', () => {
-    navigator.clipboard.writeText(`${msg}\n\n${url}`).then(() => {
-      copiar.textContent = '✅ Copiado';
-      setTimeout(()=> copiar.textContent='Copiar', 2000);
-      sembrar();
-    });
-  });
-  cont.appendChild(copiar);
-
   const textoEl = document.getElementById('verso-compartir-texto');
   const autorEl = document.getElementById('verso-compartir-autor');
   if (textoEl) textoEl.textContent = esSemilla ? '"Sembrar una semilla en el Jardín"' : `"${texto}"`;
   if (autorEl) autorEl.textContent = `— ${autor}`;
-  
+
   const panel = document.getElementById('panel-compartir');
   if (panel) panel.classList.add('visible');
 }
@@ -253,31 +171,31 @@ export function configurarBotones() {
     btnPoesia.addEventListener('click', haiku);
   }
 
-  const btnRayar = document.getElementById('btn-rayar');
-  const inputRayar = document.getElementById('input-rayar');
-  const cerrarRayar = document.getElementById('cerrar-rayar');
-  const enviarRayar = document.getElementById('enviar-rayar');
-  const mensajeRayar = document.getElementById('mensaje-rayar');
+  const btnPlegaria = document.getElementById('btn-plegaria');
+  const inputPlegaria = document.getElementById('input-plegaria');
+  const cerrarPlegaria = document.getElementById('cerrar-plegaria');
+  const enviarPlegaria = document.getElementById('enviar-plegaria');
+  const mensajePlegaria = document.getElementById('mensaje-plegaria');
 
-  if (btnRayar) {
-    btnRayar.addEventListener('click', () => {
+  if (btnPlegaria) {
+    btnPlegaria.addEventListener('click', () => {
       if (ESTADO.muerto) {
         avisoTemporal('El jardín está muerto.');
         return;
       }
-      if (inputRayar) inputRayar.classList.toggle('visible');
+      if (inputPlegaria) inputPlegaria.classList.toggle('visible');
     });
   }
 
-  if (cerrarRayar) {
-    cerrarRayar.addEventListener('click', () => {
-      if (inputRayar) inputRayar.classList.remove('visible');
+  if (cerrarPlegaria) {
+    cerrarPlegaria.addEventListener('click', () => {
+      if (inputPlegaria) inputPlegaria.classList.remove('visible');
     });
   }
 
-  if (enviarRayar && mensajeRayar) {
-    enviarRayar.addEventListener('click', async () => {
-      const t = sanitizar(mensajeRayar.value.trim());
+  if (enviarPlegaria && mensajePlegaria) {
+    enviarPlegaria.addEventListener('click', async () => {
+      const t = sanitizar(mensajePlegaria.value.trim());
       if (!t) return;
 
       const cat = ['señal', 'resonancia', 'fractura', 'deriva'][Math.floor(Math.random() * 4)];
@@ -286,8 +204,8 @@ export function configurarBotones() {
       await guardarEstado();
       crearMensaje(t);
 
-      mensajeRayar.value = '';
-      if (inputRayar) inputRayar.classList.remove('visible');
+      mensajePlegaria.value = '';
+      if (inputPlegaria) inputPlegaria.classList.remove('visible');
       
       playPageTurn();
       avisoTemporal('Palabra añadida al oráculo');
