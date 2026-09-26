@@ -247,129 +247,116 @@
     
     }
 
+      /* ===== Modal legal (idéntico a #panel-instrucciones) ===== */
     #modal-legal {
       position: fixed;
       inset: 0;
-      background: rgba(10, 10, 10, 0.92);
-      backdrop-filter: blur(10px);
+      background: rgba(0, 0, 0, 0.75);
       z-index: 99998;
       display: flex;
       align-items: center;
       justify-content: center;
-      padding: 24px;
-      overscroll-behavior: contain;
+      padding: 20px;
     }
     #modal-legal[hidden] { display: none; }
 
     .modal-legal__contenido {
       position: relative;
-      max-width: 760px;
-      width: 100%;
+      background: rgba(10, 10, 10, 0.95);
+      border: 1px solid #ff6b35;
+      border-radius: 12px;
+      padding: 20px 25px;
+      max-width: 520px;
+      width: 90%;
       max-height: 85vh;
       overflow-y: auto;
-      background: #0b0f14;
-      border: 1px solid #1a1a2e;
-      border-radius: 12px;
-      padding: 40px 36px;
       color: #ccc;
-      font-family: 'Courier New', monospace;
+      font-size: 12px;
       line-height: 1.8;
-      font-size: 13px;
+      text-align: center;
+      font-family: 'Courier New', monospace;
       overscroll-behavior: contain;
-      box-shadow: 0 0 60px rgba(0,0,0,0.9);
     }
+
+    #modal-legal-cerrar {
+      position: absolute;
+      top: 10px;
+      right: 14px;
+      background: none;
+      border: none;
+      color: #666;
+      font-size: 16px;
+      cursor: pointer;
+      padding: 0;
+      font-family: inherit;
+      z-index: 2;
+    }
+    #modal-legal-cerrar:hover { color: #ff6b35; }
+
     .modal-legal__contenido h2 {
       color: #ff6b35;
-      font-size: 13px;
-      letter-spacing: 2px;
-      margin: 28px 0 8px;
-      text-transform: uppercase;
+      font-size: 12px;
+      letter-spacing: 1px;
+      margin: 16px 0 6px;
+      font-weight: bold;
     }
-    .modal-legal__contenido p,
-    .modal-legal__contenido li { color: #aaa; font-size: 13px; line-height: 1.8; }
-    .modal-legal__contenido ul { padding-left: 20px; margin: 8px 0; }
+    .modal-legal__contenido p {
+      font-size: 11px;
+      color: #999;
+      margin: 0 0 10px;
+      text-align: left;
+    }
+    .modal-legal__contenido ul {
+      padding-left: 22px;
+      margin: 8px 0;
+      text-align: left;
+    }
+    .modal-legal__contenido li {
+      font-size: 11px;
+      color: #999;
+      margin-bottom: 6px;
+    }
     .modal-legal__contenido .marca {
       display: flex;
       align-items: center;
-      gap: 18px;
+      justify-content: center;
+      gap: 14px;
       border-bottom: 1px solid #222;
-      padding-bottom: 20px;
-      margin-bottom: 24px;
+      padding-bottom: 14px;
+      margin-bottom: 18px;
     }
-    .modal-legal__contenido .marca img { width: 60px; height: 60px; }
+    .modal-legal__contenido .marca img { width: 48px; height: 48px; }
     .modal-legal__contenido .marca h1 {
-      font-size: 18px;
+      font-size: 14px;
       letter-spacing: 2px;
       margin: 0;
       color: #fff;
     }
     .modal-legal__contenido .marca p {
-      margin: 4px 0 0;
+      margin: 2px 0 0;
       color: #ff6b35;
       font-size: 10px;
-      letter-spacing: 2px;
+      letter-spacing: 1px;
+      text-align: left;
     }
     .modal-legal__contenido .linea {
       height: 2px;
       background: #ff6b35;
       width: 90px;
-      margin: 0 0 20px;
+      margin: 0 auto 18px;
     }
     .modal-legal__contenido .nav {
-      margin-top: 40px;
-      padding-top: 20px;
+      margin-top: 24px;
+      padding-top: 14px;
       border-top: 1px solid #222;
-      font-size: 11px;
+      font-size: 10px;
+      text-align: center;
     }
     .modal-legal__contenido .nav a { color: #ff6b35; text-decoration: none; }
     .modal-legal__contenido .nav a:hover { text-decoration: underline; }
-    .modal-legal__contenido .nav span { color: #444; margin: 0 8px; }
+    .modal-legal__contenido .nav span { color: #444; margin: 0 6px; }
+   
 
-    #modal-legal-cerrar {
-      position: sticky;
-      top: 0;
-      float: right;
-      background: #0b0f14;
-      border: none;
-      color: #ccc;
-      font-size: 22px;
-      cursor: pointer;
-      opacity: .6;
-      padding: 0 6px;
-      z-index: 1;
-      font-family: inherit;
-    }
-    #modal-legal-cerrar:hover { opacity: 1; color: #ff6b35; }
-
-    #btn-ir-arriba {
-      position: fixed;
-      bottom: 24px;
-      right: 24px;
-      width: 44px;
-      height: 44px;
-      border-radius: 50%;
-      background: rgba(255, 107, 53, .9);
-      color: #0a0a0a;
-      border: none;
-      font-size: 20px;
-      font-weight: bold;
-      cursor: pointer;
-      z-index: 99997;
-      transition: opacity .2s, transform .2s;
-      font-family: inherit;
-    }
-    #btn-ir-arriba:hover { transform: translateY(-2px); background: #ff8a55; }
-    #btn-ir-arriba[hidden] { display: none; }
-
-    body.modal-abierto { overflow: hidden; }
-
-    @media (max-width: 768px) {
-      .modal-legal__contenido { padding: 28px 20px; font-size: 12px; }
-      .modal-legal__contenido h2 { font-size: 12px; }
-      #btn-ir-arriba { bottom: 90px; right: 16px; width: 40px; height: 40px; }
-    }
-
-    #cookie-banner button:hover { background:#ff8a55; transform:scale(1.05); }
 
 
   </style>

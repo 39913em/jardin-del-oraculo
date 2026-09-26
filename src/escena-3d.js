@@ -37,6 +37,20 @@ controls.maxPolarAngle = Math.PI / 2.1;
 controls.target.set(0, 1.5, 0);
 controls.update();
 
+
+const _obsModal = new MutationObserver(() => {
+  const modal = document.getElementById('modal-legal');
+  const abierto = modal && !modal.hidden;
+  controls.enabled = !abierto;
+  document.body.style.overflow = abierto ? 'hidden' : 'hidden';
+});
+document.addEventListener('DOMContentLoaded', () => {
+  const modal = document.getElementById('modal-legal');
+  if (modal) {
+    _obsModal.observe(modal, { attributes: true, attributeFilter: ['hidden'] });
+  }
+});
+
 const ambient = new THREE.AmbientLight(0x222244, 0.4);
 scene.add(ambient);
 
@@ -217,8 +231,12 @@ iniciarInteraccionFlores();
 
 let tiempo = 0;
 
+let _escenaPausada = false;
+window.__pausarEscena = (v) => { _escenaPausada = v; };
+
 export function animarEscena() {
   requestAnimationFrame(animarEscena);
+  if (_escenaPausada) return;
   tiempo += 0.01;
 
   const vidaFrac = Math.max(0, Math.min(1, ESTADO.vida / 10));
