@@ -49,16 +49,24 @@ export function generarBotonesCompartir(texto, autor, esSemilla = true) {
   // adentro y se ofrece compartirla (share sheet nativo) o descargarla.
   const textoTarjeta = esSemilla ? 'Sembrar una semilla en el Jardín' : texto;
   const previewImg = document.getElementById('verso-compartir-imagen');
+  const previewWrap = document.getElementById('tarjeta-preview-wrap');
   const accionesImg = document.getElementById('tarjeta-compartir-acciones');
-  if (previewImg) previewImg.removeAttribute('src');
-  if (accionesImg) accionesImg.innerHTML = '<span style="color:#666;font-size:10px">Generando imagen…</span>';
+  if (previewImg) previewImg.classList.remove('lista');
+  if (previewWrap) previewWrap.classList.add('cargando');
+  if (accionesImg) accionesImg.innerHTML = '';
 
   generarTarjetaCompartir(textoTarjeta, autor, esSemilla ? 'semilla' : 'verso').then(blob => {
-    if (!blob) { if (accionesImg) accionesImg.innerHTML = ''; return; }
+    if (!blob) { if (previewWrap) previewWrap.classList.remove('cargando'); return; }
     if (urlTarjetaActual) URL.revokeObjectURL(urlTarjetaActual);
     urlTarjetaActual = URL.createObjectURL(blob);
 
-    if (previewImg) previewImg.src = urlTarjetaActual;
+    if (previewImg) {
+      previewImg.onload = () => {
+        previewImg.classList.add('lista');
+        if (previewWrap) previewWrap.classList.remove('cargando');
+      };
+      previewImg.src = urlTarjetaActual;
+    }
     if (!accionesImg) return;
     accionesImg.innerHTML = '';
 
