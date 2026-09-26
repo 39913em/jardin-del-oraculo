@@ -180,6 +180,12 @@
       transition:all 0.2s ease;
     }
     #panel-compartir .botones a:hover { transform:scale(1.05); }
+    #verso-compartir-imagen {
+      display:block; width:100%; max-width:280px; margin:14px auto 4px;
+      border-radius:10px; border:1px solid #282840;
+      aspect-ratio:4/5; object-fit:cover; background:#0a0a0a;
+    }
+    #verso-compartir-imagen:not([src]) { display:none; }
     #panel-compartir .btn-cerrar-panel {
       margin-top:14px; background:none; border:none;
       color:#666; font-size:12px; cursor:pointer; font-family:inherit;
@@ -355,6 +361,30 @@
     .modal-legal__contenido .nav a { color: #ff6b35; text-decoration: none; }
     .modal-legal__contenido .nav a:hover { text-decoration: underline; }
     .modal-legal__contenido .nav span { color: #444; margin: 0 6px; }
+
+    /* Botón "ir arriba" dentro del modal legal (About/Términos/Privacidad).
+       No tenía NINGÚN estilo — por eso quedaba en el flujo normal del
+       documento, arriba a la izquierda y del tamaño de un botón nativo
+       sin CSS. Se ancla al modal, con tamaño táctil de verdad en móvil. */
+    #btn-ir-arriba {
+      position: fixed;
+      right: max(20px, env(safe-area-inset-right, 0px) + 12px);
+      bottom: max(20px, env(safe-area-inset-bottom, 0px) + 12px);
+      z-index: 99999;
+      width: 44px; height: 44px;
+      border-radius: 50%;
+      border: 1px solid #ff6b35;
+      background: rgba(10,10,10,0.85);
+      color: #ff6b35;
+      font-size: 18px;
+      line-height: 1;
+      cursor: pointer;
+      display: flex; align-items: center; justify-content: center;
+      backdrop-filter: blur(10px);
+      box-shadow: 0 2px 14px rgba(0,0,0,0.5);
+    }
+    #btn-ir-arriba[hidden] { display: none; }
+    #btn-ir-arriba:hover { background: rgba(255,107,53,0.15); }
    
 
 
@@ -421,6 +451,11 @@
     <div style="color:#ff6b35;font-size:11px;letter-spacing:2px;text-transform:uppercase;">COMPARTIR PARA SEMBRAR</div>
     <div class="texto" id="verso-compartir-texto">"Sembrar una semilla en el Jardín"</div>
     <div class="autor" id="verso-compartir-autor">— ORÁCULO</div>
+
+    <img id="verso-compartir-imagen" alt="Tarjeta con el verso para compartir" />
+    <div class="botones" id="tarjeta-compartir-acciones"></div>
+
+    <div style="color:#555;font-size:9px;margin-top:14px;letter-spacing:1px;text-transform:uppercase;">o compartir como enlace</div>
     <div class="botones" id="botones-compartir"></div>
     <button class="btn-cerrar-panel" onclick="document.getElementById('panel-compartir').classList.remove('visible')">CERRAR</button>
   </div>
@@ -465,29 +500,10 @@
 
   <script type="module" src="src/main.js"></script>
 
-<div id="modal-legal" hidden>
-  <div class="modal-legal__contenido">
-    <button id="modal-legal-cerrar" aria-label="Cerrar">×</button>
-    <div id="modal-legal-texto"></div>
-  </div>
-</div>
-
-<div id="modal-legal" hidden>
-  <div class="modal-legal__contenido">
-    <button id="modal-legal-cerrar" aria-label="Cerrar">×</button>
-    <div id="modal-legal-texto"></div>
-  </div>
-</div>
-
 <button id="btn-ir-arriba" hidden aria-label="Ir arriba">↑</button>
 
 <div id="fps-hud" style="position:fixed;top:8px;right:8px;padding:4px 8px;background:rgba(0,0,0,.6);color:#0f0;font-family:monospace;font-size:12px;z-index:99999;display:none;border-radius:4px;">FPS: --</div>
 
 </body>
-
-</html>
-</body>
-
-<div id="fps-hud" style="position:fixed;top:8px;right:8px;padding:4px 8px;background:rgba(0,0,0,.6);color:#0f0;font-family:monospace;font-size:12px;z-index:99999;display:none;border-radius:4px;">FPS: --</div>
 
 </html>

@@ -214,25 +214,74 @@ export function animarFlotantes(tiempo) {
 export function iniciarInteraccionFlotantes() {
   const raycaster = new THREE.Raycaster();
 
-renderer.domElement.addEventListener('dblclick', async e => {
-  const rect = renderer.domElement.getBoundingClientRect();
-  const mouse = new THREE.Vector2(
-    ((e.clientX - rect.left) / rect.width) * 2 - 1,
-    -((e.clientY - rect.top) / rect.height) * 2 + 1
-  );
-  raycaster.setFromCamera(mouse, camera);
+  function intentarCompartirEn(clientX, clientY) {
+    const rect = renderer.domElement.getBoundingClientRect();
+    const mouse = new THREE.Vector2(
+      ((clientX - rect.left) / rect.width) * 2 - 1,
+      -((clientY - rect.top) / rect.height) * 2 + 1
+    );
+    raycaster.setFromCamera(mouse, camera);
 
-  const todos = [...versosFlotantes, ...mensajesFlotantes];
-  if (!todos.length) return;
-  const hits = raycaster.intersectObjects(todos);
-  if (hits.length) {
-    const sprite = hits[0].object;
-    const texto = sprite.userData.texto || 'sin texto';
-    const autor = sprite.userData.autor || 'ORÁCULO';
-    generarBotonesCompartir(texto, autor, false);
-    return;
+    const todos = [...versosFlotantes, ...mensajesFlotantes];
+    if (!todos.length) return false;
+    const hits = raycaster.intersectObjects(todos);
+    if (hits.length) {
+      const sprite = hits[0].object;
+      const texto = sprite.userData.texto || 'sin texto';
+      const autor = sprite.userData.autor || 'ORÁCULO';
+      generarBotonesCompartir(texto, autor, false);
+      return true;
+    }
+    return false;
   }
-});
+
+  // Ratón/trackpad: dblclick nativo funciona bien.
+  renderer.domElement.addEventListener('dblclick', e => {
+    intentarCompartirEn(e.clientX, e.clientY);
+  });
+
+  // Táctil: dblclick NO se dispara de forma confiable en la mayoría de
+  // navegadores móviles, así que se detecta el doble-tap a mano —
+  // dos toques cortos, cerca en tiempo y en posición, sin que de por
+  // medio haya habido un arrastre (que es como OrbitControls rota la cámara).
+  let ultimoTapTiempo = 0;
+  let ultimoTapX = 0;
+  let ultimoTapY = 0;
+  let tocando = false;
+  let inicioTocandoX = 0;
+  let inicioTocandoY = 0;
+
+  renderer.domElement.addEventListener('touchstart', e => {
+    if (e.touches.length !== 1) { tocando = false; return; }
+    tocando = true;
+    inicioTocandoX = e.touches[0].clientX;
+    inicioTocandoY = e.touches[0].clientY;
+  }, { passive: true });
+
+  renderer.domElement.addEventListener('touchend', e => {
+    if (!tocando) return;
+    tocando = false;
+    const toque = e.changedTouches[0];
+    if (!toque) return;
+
+    // si el dedo se movió mucho, fue un arrastre de cámara, no un tap
+    const distArrastre = Math.hypot(toque.clientX - inicioTocandoX, toque.clientY - inicioTocandoY);
+    if (distArrastre > 12) return;
+
+    const ahora = Date.now();
+    const distEntreTaps = Math.hypot(toque.clientX - ultimoTapX, toque.clientY - ultimoTapY);
+
+    if (ahora - ultimoTapTiempo < 350 && distEntreTaps < 40) {
+      if (intentarCompartirEn(toque.clientX, toque.clientY)) {
+        e.preventDefault(); // evita que el navegador interprete un zoom/click fantasma
+      }
+      ultimoTapTiempo = 0; // reset: no encadenar un tercer tap como otro doble-tap
+    } else {
+      ultimoTapTiempo = ahora;
+      ultimoTapX = toque.clientX;
+      ultimoTapY = toque.clientY;
+    }
+  }, { passive: false });
 }
 
 
