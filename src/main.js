@@ -101,3 +101,5 @@ if (new URLSearchParams(location.search).get('fps') === '1') {
     loop();
   }
 }
+
+import './modal-legal.js';
