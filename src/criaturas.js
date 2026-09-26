@@ -1953,7 +1953,7 @@ function nadar(
     const radio =
       radioMin +
       Math.random() *
-        (CONFIG.RADIO_JARDIN -
+        (mov.wanderRadius -
           radioMin);
 
     let yBase;

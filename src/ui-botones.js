@@ -19,6 +19,7 @@ import {
 import { db } from './main.js';
 import { ref, get, set, push } from 'https://www.gstatic.com/firebasejs/12.8.0/firebase-database.js';
 import { playPageTurn } from './sonido.js';
+import { generarTarjetaCompartir } from './tarjeta-compartir.js';
 
 const REDES = [
   { id: 'twitter', label: 'X', estilo: 'background:#1DA1F2;color:#fff;' },
@@ -47,6 +48,8 @@ async function sembrar() {
   avisoTemporal(`Semilla sembrada (${ESTADO.vecesCompartido})`);
 }
 
+let urlTarjetaActual = null; // se revoca cada vez que se genera una nueva, para no acumular memoria
+
 export function generarBotonesCompartir(texto, autor, esSemilla = true) {
   console.log('🔍 generarBotonesCompartir llamado con:', { texto, autor, esSemilla }); // ← PARA DEPURAR
 
@@ -58,6 +61,51 @@ export function generarBotonesCompartir(texto, autor, esSemilla = true) {
     return;
   }
   cont.innerHTML = '';
+
+  // --- TARJETA DE IMAGEN (estilo "compartir canción" de Spotify) ---
+  // En vez de depender de que la red social arme un preview desde el link
+  // (que en Facebook ni siquiera respeta el texto pre-llenado), se genera
+  // una imagen real con el haiku/rayón adentro y se ofrece compartirla o
+  // descargarla directamente.
+  const textoTarjeta = esSemilla ? 'Sembrar una semilla en el Jardín' : texto;
+  const previewImg = document.getElementById('verso-compartir-imagen');
+  const accionesImg = document.getElementById('tarjeta-compartir-acciones');
+  if (previewImg) previewImg.removeAttribute('src');
+  if (accionesImg) accionesImg.innerHTML = '<span style="color:#666;font-size:10px">Generando imagen…</span>';
+
+  generarTarjetaCompartir(textoTarjeta, autor, esSemilla ? 'semilla' : 'verso').then(blob => {
+    if (!blob) { if (accionesImg) accionesImg.innerHTML = ''; return; }
+    if (urlTarjetaActual) URL.revokeObjectURL(urlTarjetaActual);
+    urlTarjetaActual = URL.createObjectURL(blob);
+
+    if (previewImg) previewImg.src = urlTarjetaActual;
+    if (!accionesImg) return;
+    accionesImg.innerHTML = '';
+
+    const archivo = new File([blob], 'jardin-del-oraculo.png', { type: 'image/png' });
+    const puedeCompartirArchivo = navigator.canShare && navigator.canShare({ files: [archivo] });
+
+    if (puedeCompartirArchivo) {
+      const btnCompartir = document.createElement('button');
+      btnCompartir.textContent = '📤 Compartir imagen';
+      btnCompartir.setAttribute('style', 'padding:8px 16px;border-radius:20px;border:none;background:#ff6b35;color:#0a0a0a;font-size:11px;font-weight:bold;cursor:pointer;font-family:inherit;');
+      btnCompartir.addEventListener('click', async () => {
+        try {
+          await navigator.share({ files: [archivo], title: 'Jardín del Oráculo', text: msg });
+          sembrar();
+        } catch (e) { /* el usuario canceló el share sheet: no es un error */ }
+      });
+      accionesImg.appendChild(btnCompartir);
+    }
+
+    const btnDescargar = document.createElement('a');
+    btnDescargar.textContent = puedeCompartirArchivo ? 'Descargar' : '⬇ Descargar imagen';
+    btnDescargar.href = urlTarjetaActual;
+    btnDescargar.download = 'jardin-del-oraculo.png';
+    btnDescargar.setAttribute('style', `padding:8px 16px;border-radius:20px;text-decoration:none;font-size:11px;font-weight:bold;font-family:inherit;cursor:pointer;${puedeCompartirArchivo ? 'border:1px solid #555;color:#ccc;background:transparent;' : 'border:none;background:#ff6b35;color:#0a0a0a;'}`);
+    btnDescargar.addEventListener('click', () => sembrar());
+    accionesImg.appendChild(btnDescargar);
+  });
 
   REDES.forEach(r => {
     const a = document.createElement('a');
