@@ -213,7 +213,7 @@ export function cambiarVida(cantidad) {
   if (ESTADO.muerto && cantidad > 0) return;
   if (ESTADO.muerto) return;
 
-  ESTADO.vida = Math.max(0, ESTADO.vida + cantidad);
+  ESTADO.vida = Math.min(CONFIG.MAX_VIDA, Math.max(0, ESTADO.vida + cantidad));
   ESTADO.integridad = Math.min(100, Math.max(0, (ESTADO.vida / CONFIG.MAX_VIDA) * 100));
   ESTADO.corrompido = ESTADO.vida > 0 && ESTADO.vida < CONFIG.CORRUPCION_UMBRAL;
 
